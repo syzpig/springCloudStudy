@@ -1,0 +1,49 @@
+测试服service-A
+
+让服务使用eureka服务器，只需添加@EnableDiscoveryClient注解就可以了。回到我们在上篇文章中实现的cloud-simple-service微服务应用。在main方法所在的Application类中，添加@EnableDiscoveryClient注解。然后在配置文件中添加：
+
+　　eureka.client.serviceUrl.defaultZone=http\://localhost\:8761/eureka/
+
+　　spring.application.name=cloud-simple-service
+
+　　其中defaultZone是指定eureka服务器的地址，无论是注册还是发现服务都需要这个地址。application.name是指定进行服务注册时该服务的名称。这个名称就是后面调用服务时的服务标识符（这是服务发现的功能，我们在后面章节具体介绍）。当然，pom文件也需要增加：
+
+　　<dependency>
+
+　　　　<groupId>org.springframework.cloud</groupId>
+
+　　　　<artifactId>spring-cloud-starter-eureka</artifactId>
+
+　　</dependency>
+
+　　如此以来该服务启动后会自动注册到eureka服务器。如果在该服务中还需要调用别的服务，那么直接使用那个服务的服务名称加方法名构成的url即可，具体我们将在下章结合ui端的应用具体介绍。
+
+测试zuul的负载均衡时，在启动一个service-A ，然后通过网关访问该服务，
+多次访问发现，每次请求不一样，这就实现了负载均衡，但不过试客户端负载均衡
+步骤
+先启动两个服务，截图如下：
+图略
+这时候先不要急着访问Service-A和B，我们将service-A和B中的配置文件中的端口号修改后再启动：
+
+结果如下：
+图略
+这时候我们看到了，serviceid为Service-A和B各有两个，那么接下来则是实验zuul负载均衡的时候了，我们在此只测试Service-A:
+
+第一次访问http://localhost:5555/api-a/add/1/2：
+图略
+第二次访问：
+图略
+因此这就实现了负载均衡，但是这个负载均衡是属于客户端的负载均衡。在这我也就简要的说下客户端负载均衡。
+
+客户端负载均衡：
+基于客户端的负载均衡，简单的说就是在客户端程序里面，自己设定一个调度算法，在向服务器发起请求的时候，
+先执行调度算法计算出向哪台服务器发起请求，然后再发起请求给服务器。
+特点：
+由客户端内部程序实现，不需要额外的负载均衡器软硬件投入。
+程序内部需要解决业务服务器不可用的问题，服务器故障对应用程序的透明度小。
+程序内部需要解决业务服务器压力过载的问题。
+使用场景：
+可以选择为初期简单的负载均衡方案，和DNS负载均衡一样。
+比较适合于客户端具有成熟的调度库函数，算法以及API等
+毕竟适合对服务器入流量较大的业务，如HTTP POST文件上传，FTP文件上传，Memcache大流量写入。
+可以结合其他负载均衡方案进行架构。
